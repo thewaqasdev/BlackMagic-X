@@ -1,3 +1,4 @@
+// BlackMagic-X: The Ultimate Web Engine - Clean Engine Core
 document.addEventListener("DOMContentLoaded", function () {
     // Get the canvas DOM element
     var canvas = document.getElementById("renderCanvas");
@@ -8,7 +9,7 @@ document.addEventListener("DOMContentLoaded", function () {
     // Create professional viewport scene
     var createScene = function () {
         var scene = new BABYLON.Scene(engine);
-        
+
         // Professional gradient background (dark to light like image)
         scene.clearColor = new BABYLON.Color4(0.15, 0.15, 0.18, 1.0);
 
@@ -16,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
         var camera = new BABYLON.UniversalCamera("camera", new BABYLON.Vector3(0, 8, -15), scene);
         camera.setTarget(new BABYLON.Vector3(0, 0, 10));
         camera.attachControl(canvas, true);
-        
+
         // WASD controls
         camera.keysUp.push(87);    // W
         camera.keysDown.push(83);  // S
@@ -45,9 +46,9 @@ document.addEventListener("DOMContentLoaded", function () {
         scene.fogColor = new BABYLON.Color3(0.15, 0.15, 0.18);
 
         // Create perfect grid ground (extended size for far viewing)
-        var ground = BABYLON.MeshBuilder.CreateGround("ground", { 
+        var ground = BABYLON.MeshBuilder.CreateGround("ground", {
             width: 600,            // Much larger grid
-            height: 600, 
+            height: 600,
             subdivisions: 150      // More grid lines for detail
         }, scene);
 
