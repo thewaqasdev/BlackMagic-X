@@ -1,31 +1,39 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BlackMagic-X | The Ultimate Web Engine</title>
+    <title>BlackMagic-X | Universal Engine</title>
     <link rel="stylesheet" href="style.css">
-    
+
     <!-- Babylon.js Core and Dependencies -->
     <script src="https://cdn.babylonjs.com/babylon.js"></script>
     <script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
-    <script src="https://cdn.babylonjs.com/materialsLibrary/babylonjs.materials.min.js"></script>
-    <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script> <!-- Pointer Events Polyfill -->
+    <script src="https://code.jquery.com/pep/0.4.3/pep.js"></script>
 </head>
+
 <body>
     <!-- The 3D Canvas -->
     <canvas id="renderCanvas" touch-action="none"></canvas>
 
-    <!-- 2D UI Overlay -->
+    <!-- Crosshair for Free Look -->
+    <div id="crosshair"></div>
+
+    <!-- UI Overlay -->
     <div id="ui-layer">
         <div class="title-container" id="welcomeUI">
-            <h1>🎨 BlackMagic-X</h1>
-            <p>The Ultimate 3D Web Engine</p>
-            <p style="font-size: 0.9em; margin-top: 15px; color: #aaa;">Click and drag to look around. Scroll to zoom.</p>
+            <h1>BLACKMAGIC-X</h1>
         </div>
+    </div>
+
+    <!-- Instructions Text -->
+    <div id="instructions">
+        Click to enter Viewport. WASD to move. Mouse to look. ESC to release.
     </div>
 
     <!-- Application Logic -->
     <script src="main.js"></script>
 </body>
+
 </html>
