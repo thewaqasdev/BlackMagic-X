@@ -4,8 +4,9 @@
 
 ## 🚀 Key Features
 
-- **Hybrid Architecture**: C++ WASM Core for computationally heavy tasks (physics, procedural animation).
+- **Hybrid Architecture**: C++ WASM Core for heavy computational tasks (physics, math).
 - **Cartoonish High-Gloss Renderer**: Custom-tuned PBR materials for a premium, stylized look.
+- **Inertia-Based Viewport**: Professional mouse-based navigation with physics-driven inertia.
 - **Dynamic Lighting**: Real-time neon-tube lighting and uniform high-gloss floor reflections.
 - **Optimized for Web**: Built for speed and efficiency using the latest web standards.
 - **Automated Deployment**: Seamless CI/CD via GitHub Actions and Firebase Hosting.
@@ -15,7 +16,7 @@
 - **Engine Core**: C++ (Compiled to WASM via Emscripten)
 - **3D Graphics**: Babylon.js
 - **Frontend**: Modern JavaScript, HTML5, CSS3
-- **Hosting**: Firebase Hosting (Spark Tier)
+- **Hosting**: Firebase Hosting (Spark Tier - No Credit Card)
 - **Automation**: GitHub Actions
 
 ## 📂 Project Structure
@@ -31,9 +32,9 @@ BlackMagic-X/
 
 ## 🎮 Controls
 
-- **WASD**: Move camera
-- **Mouse**: Look around
-- **Scroll**: Zoom
+- **Left Click**: Rotate (with Physics Inertia)
+- **Right Click**: Pan (with Altitude Scaling)
+- **Scroll**: Zoom to Cursor position
 
 ## 🔧 Development Flow
 
