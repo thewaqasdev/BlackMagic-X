@@ -1,48 +1,45 @@
-# BlackMagic-X | The Ultimate Web Engine
+# BlackMagic-X | Next-Gen Web Engine
 
-A professional 3D web engine built with Babylon.js, featuring real-time rendering and interactive controls.
+**BlackMagic-X** is a high-performance 3D web engine designed for ultra-smooth, stylized rendering. It combines the power of **C++ (WebAssembly)** for core logic with **Babylon.js** for GPU-accelerated graphics.
 
-## 🎯 Features
+## 🚀 Key Features
 
-- **3D Viewport**: Professional grid-based environment
-- **FPS Controls**: WASD movement + mouse look
-- **Real-time Rendering**: Powered by Babylon.js
-- **Responsive Design**: Works on desktop and mobile
-- **Auto-deployment**: CI/CD pipeline with GitHub Actions
+- **Hybrid Architecture**: C++ WASM Core for computationally heavy tasks (physics, procedural animation).
+- **Cartoonish High-Gloss Renderer**: Custom-tuned PBR materials for a premium, stylized look.
+- **Dynamic Lighting**: Real-time neon-tube lighting and uniform high-gloss floor reflections.
+- **Optimized for Web**: Built for speed and efficiency using the latest web standards.
+- **Automated Deployment**: Seamless CI/CD via GitHub Actions and Firebase Hosting.
 
-## 🚀 Live Demo
+## 🛠️ Tech Architecture
 
-Visit: [https://blackmagic-x.web.app/](https://blackmagic-x.web.app/)
+- **Engine Core**: C++ (Compiled to WASM via Emscripten)
+- **3D Graphics**: Babylon.js
+- **Frontend**: Modern JavaScript, HTML5, CSS3
+- **Hosting**: Firebase Hosting (Spark Tier)
+- **Automation**: GitHub Actions
 
-## 🛠️ Tech Stack
-
-- **Frontend**: HTML5, CSS3, JavaScript
-- **3D Engine**: Babylon.js
-- **Hosting**: Firebase Hosting
-- **CI/CD**: GitHub Actions
-
-## 📦 Project Structure
+## 📂 Project Structure
 
 ```
 BlackMagic-X/
-├── public/
-│   ├── index.html
-│   ├── main.js
-│   └── style.css
-├── .github/workflows/
-└── firebase.json
+├── public/         # Live web files (HTML/CSS/JS)
+│   ├── wasm/       # Compiled WebAssembly modules
+├── src/            # C++ Source Code
+├── .github/        # Deployment Workflows
+└── CMakeLists.txt  # Build System
 ```
 
 ## 🎮 Controls
 
 - **WASD**: Move camera
 - **Mouse**: Look around
-- **Scroll**: Zoom (if enabled)
+- **Scroll**: Zoom
 
-## 🔧 Development
+## 🔧 Development Flow
 
-This project uses automated deployment. Push to `main` branch to deploy.
+1. Update C++ code in `src/` or JS in `public/`.
+2. Commit changes.
+3. `git push` to deploy automatically.
 
 ---
-
-**Built with ❤️ by thewaqasdev**
+**Vision**: Creating the fastest, most beautiful stylized 3D environment for the web.

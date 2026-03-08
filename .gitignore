@@ -3,3 +3,6 @@ information.txt
 node_modules/
 .firebase/
 LOCAL_README.md
+ 
+backup/
+user/
