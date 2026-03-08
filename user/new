@@ -145,9 +145,9 @@ document.addEventListener("DOMContentLoaded", function () {
         var hemiLight = new BABYLON.HemisphericLight("hemi", new BABYLON.Vector3(0, 1, 0), scene);
         hemiLight.intensity = 0.05; // Very low
 
-        // Glow Layer for high-energy cartoonish effects
+        // Glow Layer for futuristic neon effects
         var glow = new BABYLON.GlowLayer("glow", scene);
-        glow.intensity = 0.8; // Increased for cartoonish punch
+        glow.intensity = 0.3; // Reduced
 
         // --- Phase 1.5: Exact Reference Replication ---
         // 1. Precise Isometric Viewpoint
@@ -163,14 +163,14 @@ document.addEventListener("DOMContentLoaded", function () {
         floorParent.parent = roomParent;
 
         var tileMat = new BABYLON.PBRMaterial("tileMat", scene);
-        tileMat.albedoColor = new BABYLON.Color3(0.005, 0.0, 0.01);
-        tileMat.roughness = 0.05;
-        tileMat.metallic = 0.8;
-        tileMat.reflectivityColor = new BABYLON.Color3(1.5, 0.8, 2.0); // Further intensified purple shine
+        tileMat.albedoColor = new BABYLON.Color3(0.01, 0.01, 0.02); // Deeper Black
+        tileMat.roughness = 0.95;
+        tileMat.metallic = 0.0;
+        tileMat.reflectivityColor = new BABYLON.Color3(0, 0, 0); // Kill moving highlights
 
         var neonMat = new BABYLON.StandardMaterial("neonMat", scene);
-        neonMat.emissiveColor = new BABYLON.Color3(1, 1, 1); // Pure White glow
-        neonMat.disableLighting = true; // Fixes movement/shading artifacts on thin lines
+        neonMat.emissiveColor = new BABYLON.Color3(1.0, 1.2, 1.5);
+        neonMat.zOffset = -5; // Higher priority to stay on top
 
         // Create Sharp Center Texture (Removes side brightness)
         var neonTex = new BABYLON.DynamicTexture("neonTex", { width: 128, height: 128 }, scene);
@@ -182,10 +182,12 @@ document.addEventListener("DOMContentLoaded", function () {
         neonTex.update();
         neonMat.emissiveTexture = neonTex;
 
-        // Unified directional light for consistent highlights on all floor blocks
-        var floorDirLight = new BABYLON.DirectionalLight("floorDirLight", new BABYLON.Vector3(0, -1, 0.2), scene);
-        floorDirLight.intensity = 1.0;
-        floorDirLight.diffuse = new BABYLON.Color3(0.4, 0.2, 0.5); // Subtle purple tint to highlights
+        // Edge Tile Mat (Half-Black Effect)
+        var edgeTileMat = new BABYLON.PBRMaterial("edgeTileMat", scene);
+        edgeTileMat.albedoColor = new BABYLON.Color3(0.02, 0.02, 0.03); // Deepest Black/Indigo
+        edgeTileMat.roughness = 0.95;
+        edgeTileMat.metallic = 0.0;
+        edgeTileMat.reflectivityColor = new BABYLON.Color3(0, 0, 0);
 
         var gridSize = 9; // Larger slabs
         var totalSize = 40;
@@ -206,28 +208,30 @@ document.addEventListener("DOMContentLoaded", function () {
                 tile.position = new BABYLON.Vector3(xPos, 0.6, zPos);
                 tile.parent = floorParent;
 
-                // All blocks are now identical as requested
-                tile.material = tileMat;
+                // If it's on the edge with NO wall (Front or Right), use darker mat
+                if (i === gridSize - 1 || j === 0) {
+                    tile.material = edgeTileMat;
+                } else {
+                    tile.material = tileMat;
+                }
             }
         }
 
-        // Create Tubular Neon Sticks (Cylindrical instead of flat boxes)
+        // Create Continuous Neon Strips (Sirf andar wali lines, edges skip kar di hain)
         for (var i = 1; i < gridSize; i++) {
             var pos = (i - gridSize / 2) * tileSize;
 
-            // Vertical Strips (Along Z axis)
-            var vStick = BABYLON.MeshBuilder.CreateCylinder("vStick_" + i, { height: totalSize, diameter: 0.12, tessellation: 12 }, scene);
-            vStick.rotation.x = Math.PI / 2; // Lie flat along Z
-            vStick.position = new BABYLON.Vector3(pos, 1.15, 0); // Lowered slightly
-            vStick.parent = floorParent;
-            vStick.material = neonMat;
+            // Vertical Strips (Inner only)
+            var vLine = BABYLON.MeshBuilder.CreateBox("vLine_" + i, { width: 0.06, height: 0.1, depth: totalSize }, scene);
+            vLine.position = new BABYLON.Vector3(pos, 1.19, 0);
+            vLine.parent = floorParent;
+            vLine.material = neonMat;
 
-            // Horizontal Strips (Along X axis)
-            var hStick = BABYLON.MeshBuilder.CreateCylinder("hStick_" + i, { height: totalSize, diameter: 0.12, tessellation: 12 }, scene);
-            hStick.rotation.z = Math.PI / 2; // Lie flat along X
-            hStick.position = new BABYLON.Vector3(0, 1.15, pos); // Lowered slightly
-            hStick.parent = floorParent;
-            hStick.material = neonMat;
+            // Horizontal Strips (Inner only)
+            var hLine = BABYLON.MeshBuilder.CreateBox("hLine_" + i, { width: totalSize, height: 0.1, depth: 0.06 }, scene);
+            hLine.position = new BABYLON.Vector3(0, 1.19, pos);
+            hLine.parent = floorParent;
+            hLine.material = neonMat;
         }
 
         // Glowing Valley Surface (Underneath the slabs)
@@ -246,73 +250,64 @@ document.addEventListener("DOMContentLoaded", function () {
         var ctx = wallTexture.getContext();
 
         // Cartoonish purple wall with stars (like reference image)
-        // Background fill
-        ctx.fillStyle = "#160636"; // Dark navy purple
+        ctx.fillStyle = "#1a053a";
         ctx.fillRect(0, 0, wallTextureWidth, wallTextureHeight);
 
-        // Circular glow in the middle for atmospheric depth
-        var centerGlow = ctx.createRadialGradient(512, 512, 100, 512, 512, 800);
-        centerGlow.addColorStop(0, "#3e1273");
-        centerGlow.addColorStop(1, "#160636");
-        ctx.fillStyle = centerGlow;
+        // Purple gradient overlay for depth
+        var gradient = ctx.createRadialGradient(512, 512, 100, 512, 512, 700);
+        gradient.addColorStop(0, "rgba(138, 82, 168, 0.4)");
+        gradient.addColorStop(1, "rgba(26, 5, 58, 0.2)");
+        ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, wallTextureWidth, wallTextureHeight);
 
-        // --- Light Beams from Tubes (Procedural on texture) ---
-        // Since wall1 has width 40 and wall2 has depth 40, and the texture covers them,
-        // we can add a fixed light glow at the top center.
-        var lightBeam = ctx.createRadialGradient(512, 0, 50, 512, 0, 600);
-        lightBeam.addColorStop(0, "rgba(224, 112, 255, 0.4)");
-        lightBeam.addColorStop(0.5, "rgba(138, 43, 226, 0.15)");
-        lightBeam.addColorStop(1, "rgba(0, 0, 0, 0)");
-        ctx.fillStyle = lightBeam;
-        ctx.fillRect(0, 0, wallTextureWidth, 600);
-
-        // --- Stars and Glowing Particles ---
-        // Small White Dots
+        // Add white stars (small dots)
         ctx.fillStyle = "#ffffff";
-        for (var s = 0; s < 120; s++) {
+        for (var s = 0; s < 40; s++) {
             var sx = Math.random() * wallTextureWidth;
             var sy = Math.random() * wallTextureHeight;
-            var sRadius = Math.random() * 1.8 + 0.5;
+            var sSize = Math.random() * 2 + 1;
             ctx.beginPath();
-            ctx.arc(sx, sy, sRadius, 0, Math.PI * 2);
+            ctx.arc(sx, sy, sSize, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // Glowing Star Crosses
-        ctx.shadowColor = "#f4aaff";
-        ctx.shadowBlur = 15;
-        ctx.fillStyle = "#ffffff";
-        for (var sc = 0; sc < 15; sc++) {
-            var scx = Math.random() * wallTextureWidth;
-            var scy = Math.random() * wallTextureHeight;
-            var scSize = Math.random() * 8 + 5;
-
-            // Vertical bar
-            ctx.fillRect(scx - 1, scy - scSize, 2, scSize * 2);
-            // Horizontal bar
-            ctx.fillRect(scx - scSize, scy - 1, scSize * 2, 2);
-
-            // Core dot
+        // Add larger glowing stars (5-pointed)
+        ctx.shadowColor = "#ffffff";
+        ctx.shadowBlur = 8;
+        for (var st = 0; st < 8; st++) {
+            var stx = Math.random() * wallTextureWidth;
+            var sty = Math.random() * wallTextureHeight;
+            var starSize = Math.random() * 8 + 6;
+            
+            // Draw 5-pointed star
             ctx.beginPath();
-            ctx.arc(scx, scy, 2, 0, Math.PI * 2);
+            for (var p = 0; p < 5; p++) {
+                var angle = (p * 4 * Math.PI) / 5 - Math.PI / 2;
+                var x = stx + Math.cos(angle) * starSize;
+                var y = sty + Math.sin(angle) * starSize;
+                if (p === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            }
+            ctx.closePath();
+            ctx.fillStyle = "#e0b0ff";
             ctx.fill();
         }
         ctx.shadowBlur = 0;
 
-        // Thinner Black Cartoonish Stroke (Only black, no purple border)
-        ctx.strokeStyle = "#000000";
-        ctx.lineWidth = 2.5;
-        ctx.strokeRect(10, 10, wallTextureWidth - 20, wallTextureHeight - 20);
-
+        // Add border frame
+        ctx.strokeStyle = "#6b4c8a";
+        ctx.lineWidth = 8;
+        ctx.strokeRect(4, 4, wallTextureWidth - 8, wallTextureHeight - 8);
+        
         wallTexture.update();
 
         var wallMat = new BABYLON.StandardMaterial("wallMat", scene);
         wallMat.diffuseTexture = wallTexture;
-        wallMat.emissiveTexture = wallTexture;
-        wallMat.emissiveColor = new BABYLON.Color3(0.2, 0.15, 0.25); // Subtle glow
-        wallMat.specularColor = new BABYLON.Color3(0, 0, 0);
-        wallMat.roughness = 0.95;
+        wallMat.emissiveColor = new BABYLON.Color3(0, 0, 0); // No glow
+        wallMat.specularColor = new BABYLON.Color3(0, 0, 0); // No shine
+        wallMat.emissiveTexture = wallTexture; // Makes pattern naturally glow
+        wallMat.emissiveColor = new BABYLON.Color3(0.5, 0.5, 0.5); // Tune intensity
+        wallMat.roughness = 0.9;
         wallMat.metallic = 0.0;
         wallMat.reflectivityColor = new BABYLON.Color3(0, 0, 0); // Kill specular movement
 
@@ -326,11 +321,9 @@ document.addEventListener("DOMContentLoaded", function () {
         wall2.parent = roomParent;
         wall2.material = wallMat;
 
-        // Removed corner line mesh to eliminate the "three lines" issue
-
-        // --- Neon Tube Lights (White with Purple Ambient Effect) ---
+        // --- Neon Tube Lights (White) ---
         var tubeMat = new BABYLON.StandardMaterial("tubeMat", scene);
-        tubeMat.emissiveColor = new BABYLON.Color3(1.0, 1.0, 1.0); // Pure White
+        tubeMat.emissiveColor = new BABYLON.Color3(1.0, 1.0, 1.0); // Bright white
         tubeMat.disableLighting = true;
 
         var tubeCapMat = new BABYLON.StandardMaterial("tubeCapMat", scene);
@@ -368,17 +361,12 @@ document.addEventListener("DOMContentLoaded", function () {
         createShortTube("w2Tube", new BABYLON.Vector3(-19.3, 24, 0), "x", scene);
 
         // Add subtle light sources for the tubes (to cast glow on room)
-        var tLight1 = new BABYLON.PointLight("tLight1", new BABYLON.Vector3(0, 23, 15), scene);
-        tLight1.diffuse = new BABYLON.Color3(1.0, 0.4, 0.8); // Vibrant purple-pink light
-        tLight1.specular = new BABYLON.Color3(3.0, 1.5, 4.0); // Extremely intense purple specular hotspots
-        tLight1.intensity = 350;
-        tLight1.range = 90;
-
-        var tLight2 = new BABYLON.PointLight("tLight2", new BABYLON.Vector3(-15, 23, 0), scene);
-        tLight2.diffuse = new BABYLON.Color3(1.0, 0.4, 0.8);
-        tLight2.specular = new BABYLON.Color3(3.0, 1.5, 4.0);
-        tLight2.intensity = 350;
-        tLight2.range = 90;
+        var tLight1 = new BABYLON.PointLight("tLight1", new BABYLON.Vector3(0, 23, 18), scene);
+        tLight1.diffuse = new BABYLON.Color3(1.0, 1.0, 1.0); // White
+        tLight1.intensity = 150;
+        var tLight2 = new BABYLON.PointLight("tLight2", new BABYLON.Vector3(-18, 23, 0), scene);
+        tLight2.diffuse = new BABYLON.Color3(1.0, 1.0, 1.0); // White
+        tLight2.intensity = 150;
 
         // --- Thin Black Top Borders Only ---
         var borderMat = new BABYLON.StandardMaterial("borderMat", scene);
@@ -439,301 +427,198 @@ document.addEventListener("DOMContentLoaded", function () {
         cornerTile.parent = floorParent;
         cornerTile.material = blackTileMat;
 
-        // 3. Cartoonish Cyberpunk Door
+        // 3. Cyberpunk Door on Left Wall
         var doorParent = new BABYLON.TransformNode("doorParent", scene);
-        doorParent.position = new BABYLON.Vector3(-19.4, 9, -14);
+        doorParent.position = new BABYLON.Vector3(-19.4, 9, -14); // Moved 1 point towards desk at z=10
 
         // Door Panel
         var doorPanel = BABYLON.MeshBuilder.CreateBox("doorPanel", { width: 0.2, height: 16, depth: 9.0 }, scene);
         doorPanel.parent = doorParent;
-        var doorMat = new BABYLON.StandardMaterial("doorMat", scene);
-        doorMat.diffuseColor = new BABYLON.Color3(0.08, 0.08, 0.1);
+        var doorMat = new BABYLON.PBRMaterial("doorMat", scene);
+        doorMat.albedoColor = new BABYLON.Color3(0.05, 0.05, 0.05);
+        doorMat.roughness = 0.8;
         doorPanel.material = doorMat;
 
-        // Glowing Door Frame
+        // Neon Door Frame (Rounded effect via thin boxes)
         var frameMat = new BABYLON.StandardMaterial("frameMat", scene);
-        frameMat.diffuseColor = new BABYLON.Color3(0, 0, 0); // Full Black
-        frameMat.specularColor = new BABYLON.Color3(1, 1, 1); // Shiny highlight
-        frameMat.specularPower = 64;
-        frameMat.alpha = 0.7; // Transparent black like the doorknob
+        frameMat.emissiveColor = new BABYLON.Color3(0.6, 0.2, 1); // Purple Glow
 
-        var leftFrame = BABYLON.MeshBuilder.CreateBox("leftFrame", { width: 0.25, height: 16.4, depth: 0.2 }, scene);
-        leftFrame.position = new BABYLON.Vector3(0.05, 0, -4.6);
+        var leftFrame = BABYLON.MeshBuilder.CreateBox("leftFrame", { width: 0.25, height: 16.2, depth: 0.1 }, scene);
+        leftFrame.position = new BABYLON.Vector3(0.05, 0, -4.5);
         leftFrame.parent = doorParent;
         leftFrame.material = frameMat;
 
-        var rightFrame = BABYLON.MeshBuilder.CreateBox("rightFrame", { width: 0.25, height: 16.4, depth: 0.2 }, scene);
-        rightFrame.position = new BABYLON.Vector3(0.05, 0, 4.6);
+        var rightFrame = BABYLON.MeshBuilder.CreateBox("rightFrame", { width: 0.25, height: 16.2, depth: 0.1 }, scene);
+        rightFrame.position = new BABYLON.Vector3(0.05, 0, 4.5);
         rightFrame.parent = doorParent;
         rightFrame.material = frameMat;
 
-        var topFrame = BABYLON.MeshBuilder.CreateBox("topFrame", { width: 0.25, height: 0.2, depth: 9.4 }, scene);
-        topFrame.position = new BABYLON.Vector3(0.05, 8.2, 0);
+        var topFrame = BABYLON.MeshBuilder.CreateBox("topFrame", { width: 0.25, height: 0.1, depth: 9.1 }, scene);
+        topFrame.position = new BABYLON.Vector3(0.05, 8.1, 0);
         topFrame.parent = doorParent;
         topFrame.material = frameMat;
 
-        // --- 3.1 Transparent Black Ball Doorknob ---
+        // "GAME OVER" Text on Door
+        var doorTextPlane = BABYLON.MeshBuilder.CreatePlane("doorTextPlane", { height: 10, width: 8 }, scene);
+        // Position it slightly outside the flat door panel on X (width/2=0.1 + slightly offset)
+        doorTextPlane.position = new BABYLON.Vector3(0.11, 2, 0);
+        doorTextPlane.rotation.y = Math.PI / 2; // Face towards room center
+        doorTextPlane.parent = doorParent;
+
+        var dT = new BABYLON.DynamicTexture("doorText", { width: 1024, height: 1024 }, scene, false);
+        dT.hasAlpha = true;
+        var dCtx = dT.getContext();
+
+        // Draw text
+        dCtx.shadowColor = "#ffffff";
+        dCtx.shadowBlur = 30;
+        dCtx.font = "bold 180px 'Arial Black', Arial, sans-serif";
+        dCtx.fillStyle = "#ffffff";
+        dCtx.textAlign = "center";
+
+        // Rotated text slightly for style or just stack it
+        dCtx.fillText("GAME", 512, 400);
+        dCtx.fillText("OVER", 512, 600);
+        dT.update();
+
+        var dMat = new BABYLON.StandardMaterial("dMat", scene);
+        dMat.diffuseTexture = dT;
+        dMat.emissiveTexture = dT; // Makes it glow natively
+        dMat.useAlphaFromDiffuseTexture = true;
+        dMat.disableLighting = true;
+        doorTextPlane.material = dMat;
+
+        // Cyberpunk Door Handle (Replaces old Porthole)
+        // 1. Sleek base plate on the side
+        var knobBase = BABYLON.MeshBuilder.CreateBox("knobBase", { width: 0.05, height: 1.5, depth: 0.5 }, scene);
+        knobBase.position = new BABYLON.Vector3(0.12, -0.5, -3.6);
+        knobBase.parent = doorParent;
+        var baseMat = new BABYLON.StandardMaterial("baseMat", scene);
+        baseMat.emissiveColor = new BABYLON.Color3(0.1, 0.1, 0.1);
+        knobBase.material = baseMat;
+
+        // 2. Knob Core
+        var knobHandle = BABYLON.MeshBuilder.CreateCylinder("knobHandle", { diameter: 0.2, height: 0.25 }, scene);
+        knobHandle.rotation.z = Math.PI / 2;
+        knobHandle.position = new BABYLON.Vector3(0.2, -0.5, -3.6);
+        knobHandle.parent = doorParent;
         var knobMat = new BABYLON.StandardMaterial("knobMat", scene);
-        knobMat.diffuseColor = new BABYLON.Color3(0, 0, 0); // Full Black
-        knobMat.specularColor = new BABYLON.Color3(1, 1, 1); // Sharp White Highlight
-        knobMat.specularPower = 64; // Very shiny
-        knobMat.alpha = 0.7; // Slightly more transparent
-
-        // Small neck connecting knob to door
-        var knobNeck = BABYLON.MeshBuilder.CreateCylinder("knobNeck", { diameter: 0.2, height: 0.2 }, scene);
-        knobNeck.rotation.z = Math.PI / 2;
-        knobNeck.position = new BABYLON.Vector3(0.1, -1.0, 3.5);
-        knobNeck.parent = doorParent;
-        knobNeck.material = knobMat;
-
-        // The main Ball Doorknob
-        var doorBall = BABYLON.MeshBuilder.CreateSphere("doorBall", { diameter: 0.8 }, scene);
-        doorBall.position = new BABYLON.Vector3(0.5, -1.0, 3.5);
-        doorBall.scaling.x = 0.7; // Slightly flattened
-        doorBall.parent = doorParent;
-        doorBall.material = knobMat;
-
-        // Front Flat Circular Face (The "Circular Plan" - now inset)
-        var knobFrontFace = BABYLON.MeshBuilder.CreateCylinder("knobFrontFace", { diameter: 0.6, height: 0.01 }, scene);
-        knobFrontFace.rotation.z = Math.PI / 2;
-        knobFrontFace.position = new BABYLON.Vector3(0.73, -1.0, 3.5); // Moved back to fit INSIDE the sphere
-        knobFrontFace.parent = doorParent;
-        knobFrontFace.material = knobMat;
+        knobMat.emissiveColor = new BABYLON.Color3(1, 1, 1); // Bright white glow
+        knobHandle.material = knobMat;
 
         // 3. Glowing Handle Lever
-        // Removed old lever because it's replaced above
+        var knobLever = BABYLON.MeshBuilder.CreateBox("knobLever", { width: 0.08, height: 0.08, depth: 0.7 }, scene);
+        knobLever.position = new BABYLON.Vector3(0.3, -0.5, -3.3);
+        knobLever.parent = doorParent;
+        knobLever.material = knobMat;
 
-
-        // 4. Large White Cartoonish Computer Table
+        // 4. Z-Shaped Futuristic Gaming Desk
         var deskParent = new BABYLON.TransformNode("deskParent", scene);
-        deskParent.position = new BABYLON.Vector3(-14, 0, 6);
-        deskParent.rotation.y = -Math.PI / 2;
+        deskParent.position = new BABYLON.Vector3(-14, 1.2, 10); // Placed further along the wall (z=10) to not block the door
+        deskParent.rotation.y = -Math.PI / 2; // Rotated to face the center of the room
 
-        var dWhite = new BABYLON.StandardMaterial("dWhite", scene);
-        dWhite.diffuseColor = new BABYLON.Color3(0.7, 0.7, 0.73); // Matte off-white to eliminate glare
-        dWhite.specularColor = new BABYLON.Color3(0.05, 0.05, 0.05); // Low specular for a soft finish
-        dWhite.emissiveColor = new BABYLON.Color3(0, 0, 0);
 
-        var dFrameMat = new BABYLON.StandardMaterial("dFrameMat", scene);
-        dFrameMat.diffuseColor = new BABYLON.Color3(0.8, 0.8, 0.82); // Softer frame color
+        var deskMat = new BABYLON.PBRMaterial("deskMat", scene);
+        deskMat.albedoColor = new BABYLON.Color3(0.9, 0.92, 0.95); // Sleek Off-white
+        deskMat.roughness = 0.4;
+        deskMat.metallic = 0.1;
 
-        var dGlow = new BABYLON.StandardMaterial("dGlow", scene);
-        dGlow.emissiveColor = new BABYLON.Color3(0.8, 0.2, 1.0); // Intense Purple Riser Glow
+        var accentMat = new BABYLON.PBRMaterial("accentMat", scene);
+        accentMat.albedoColor = new BABYLON.Color3(0, 0, 0); // Pure black accents
 
-        // --- 4.1 Specialized Angled Table Top ---
-        // Main Surface (Extended to touch the legs at x=5.2)
-        var mainSurf = BABYLON.MeshBuilder.CreateBox("mainSurf", { width: 12.2, height: 0.4, depth: 6 }, scene);
-        mainSurf.position.set(-0.9, 5.8, 0);
-        mainSurf.material = dWhite;
-        mainSurf.parent = deskParent;
+        accentMat.roughness = 0.6;
+        accentMat.metallic = 0.5;
 
-        // Fully Rebuilt PC Shelf (Moved away from wall and centered under table)
-        var pcBottomSupport = BABYLON.MeshBuilder.CreateBox("pcBottomSupport", { width: 2.6, height: 0.3, depth: 6.0 }, scene);
-        pcBottomSupport.position.set(-4.5, 1.6, 0);
-        pcBottomSupport.material = dWhite;
-        pcBottomSupport.parent = deskParent;
+        var topWidth = 14;
+        var topDepth = 7;
+        var topThickness = 0.5;
 
-        // Rebuilt Legs for PC Shelf area (Placed accurately under corner edges)
-        var createPCLeg = function (name, lx, lz) {
-            var pl = BABYLON.MeshBuilder.CreateBox(name, { width: 0.2, height: 5.8, depth: 0.2 }, scene);
-            pl.position.set(lx, 2.9, lz);
-            pl.material = dFrameMat;
-            pl.parent = deskParent;
+        // Main Tabletop
+        var tabletop = BABYLON.MeshBuilder.CreateBox("tabletop", { width: topWidth, height: topThickness, depth: topDepth }, scene);
+        tabletop.position = new BABYLON.Vector3(0, 6, 0); // Desk height
+        tabletop.parent = deskParent;
+        tabletop.material = deskMat;
+
+        // Side Bumpers (Accents on left/right edges)
+        var leftBumper = BABYLON.MeshBuilder.CreateBox("leftBumper", { width: 0.6, height: topThickness + 0.15, depth: topDepth + 0.2 }, scene);
+        leftBumper.position = new BABYLON.Vector3(-topWidth / 2 - 0.1, 6, 0);
+        leftBumper.parent = deskParent;
+        leftBumper.material = accentMat;
+
+        var rightBumper = leftBumper.clone("rightBumper");
+        rightBumper.position.x = topWidth / 2 + 0.1;
+
+        // Z-Leg Helper Function
+        var createZLeg = function (name, xOffset, scene) {
+            var legParent = new BABYLON.TransformNode(name, scene);
+            legParent.parent = deskParent;
+            legParent.position = new BABYLON.Vector3(xOffset, 0, 0);
+
+            var legWidth = 1.0;
+            var legDepth = 5.0;
+
+            // Bottom Foot
+            var foot = BABYLON.MeshBuilder.CreateBox("foot", { width: legWidth, height: 0.6, depth: legDepth }, scene);
+            foot.position = new BABYLON.Vector3(0, 0.3, 0);
+            foot.parent = legParent;
+            foot.material = deskMat;
+
+            // Diagonal Pillar
+            var diag = BABYLON.MeshBuilder.CreateBox("diag", { width: legWidth, height: 6.8, depth: 1.4 }, scene);
+            diag.position = new BABYLON.Vector3(0, 3.2, 0.8);
+            diag.rotation.x = -Math.PI / 7; // Tilt forward
+            diag.parent = legParent;
+            diag.material = deskMat;
+
+            // Inner Accent Stripe on Diagonal
+            var diagAccent = BABYLON.MeshBuilder.CreateBox("diagAccent", { width: legWidth + 0.05, height: 6.0, depth: 0.4 }, scene);
+            diagAccent.position = new BABYLON.Vector3(0, 3.2, 0.8);
+            diagAccent.rotation.x = -Math.PI / 7;
+            diagAccent.parent = legParent;
+            diagAccent.material = accentMat;
+
+            // Top Horizontal Support (lowered slightly so it doesn't poke through the tabletop)
+            var topSupp = BABYLON.MeshBuilder.CreateBox("topSupp", { width: legWidth, height: 0.2, depth: legDepth - 1 }, scene);
+            topSupp.position = new BABYLON.Vector3(0, 5.65, 0.8);
+            topSupp.parent = legParent;
+            topSupp.material = deskMat;
         };
-        createPCLeg("pcLeg1", -3.5, 2.6);
-        createPCLeg("pcLeg2", -5.5, 2.6);
-        createPCLeg("pcLeg3", -3.5, -2.6);
-        createPCLeg("pcLeg4", -5.5, -2.6);
 
-        // Front edge extension (Extended to touch at x=5.2)
-        var frontExtension = BABYLON.MeshBuilder.CreateBox("frontExt", { width: 8.2, height: 0.4, depth: 1 }, scene);
-        frontExtension.position.set(1.1, 5.8, 2.5);
-        frontExtension.material = dWhite;
-        frontExtension.parent = deskParent;
+        createZLeg("leftLeg", -topWidth / 2 + 1.2, scene);
+        createZLeg("rightLeg", topWidth / 2 - 1.2, scene);
 
-        // --- 4.6 The Wing (Specially shaped extension) ---
-        var wing = new BABYLON.Mesh("wing", scene);
-        var wingPoints = [
-            new BABYLON.Vector3(0, 0, 2),    // 0: Inner Front
-            new BABYLON.Vector3(-2.4, 0, 2), // 1: Outer Front (Reduced from 3.0)
-            new BABYLON.Vector3(-2.4, 0, 0.5), // 2: Outer Slant Start
-            new BABYLON.Vector3(-1.6, 0, -2),// 3: Outer Back (Increased from 1.0)
-            new BABYLON.Vector3(0, 0, -2)    // 4: Inner Back
-        ];
+        // Cup Holder (Facing towards the room center, opposite the wall)
+        var cupMount = BABYLON.MeshBuilder.CreateBox("cupMount", { width: 1.0, height: 0.25, depth: 1.8 }, scene);
+        cupMount.position = new BABYLON.Vector3(topWidth / 2 + 0.6, 5.85, 2.0);
+        cupMount.parent = deskParent;
+        cupMount.material = accentMat;
 
-        var wingThickness = 0.4;
-        var wingVertices = [];
-        var wingIndices = [];
-        var wingNormals = [];
+        var cupRing = BABYLON.MeshBuilder.CreateTube("cupRing", {
+            path: [new BABYLON.Vector3(0, 0, 0), new BABYLON.Vector3(0, 0.6, 0)],
+            radius: 0.7,
+            thickness: 0.15
+        }, scene);
+        cupRing.position = new BABYLON.Vector3(topWidth / 2 + 1.5, 5.85, 2.0);
+        cupRing.parent = deskParent;
+        cupRing.material = deskMat;
 
-        // Vertices: Bottom Face (y=0) then Top Face (y=0.4)
-        wingPoints.forEach(p => wingVertices.push(p.x, 0, p.z));
-        wingPoints.forEach(p => wingVertices.push(p.x, wingThickness, p.z));
+        // Headphone Hook (Facing towards the room center, opposite the wall)
+        var hookVert = BABYLON.MeshBuilder.CreateBox("hookVert", { width: 0.15, height: 1.0, depth: 0.2 }, scene);
+        hookVert.position = new BABYLON.Vector3(topWidth / 2 - 0.5, 5.2, 3.0);
+        hookVert.parent = deskParent;
+        hookVert.material = accentMat;
 
-        // Indices:
-        // Bottom Face (Visible from bottom: CW from top-view is CCW from bottom-view)
-        wingIndices.push(0, 4, 3);
-        wingIndices.push(0, 3, 2);
-        wingIndices.push(0, 2, 1);
-
-        // Top Face (Visible from top: CCW from top-view)
-        wingIndices.push(5, 6, 7);
-        wingIndices.push(5, 7, 8);
-        wingIndices.push(5, 8, 9);
-        // Sides
-        for (var i = 0; i < 5; i++) {
-            var next = (i + 1) % 5;
-            var b1 = i;
-            var b2 = next;
-            var t1 = i + 5;
-            var t2 = next + 5;
-            // Face b1 -> b2 is CW from top, so b1-t1-t2 is CCW from outside
-            wingIndices.push(b1, t1, t2);
-            wingIndices.push(b1, t2, b2);
-        }
-
-        var vertexData = new BABYLON.VertexData();
-        vertexData.positions = wingVertices;
-        vertexData.indices = wingIndices;
-        BABYLON.VertexData.ComputeNormals(wingVertices, wingIndices, wingNormals);
-        vertexData.normals = wingNormals;
-        vertexData.applyToMesh(wing);
-
-        // Visibility Fix: Ensure it's never invisible from top/bottom
-        var wingMaterial = dWhite.clone("wingMaterial");
-        wingMaterial.backFaceCulling = false;
-        wing.material = wingMaterial;
-
-        wing.parent = deskParent;
-        wing.rotation.y = -Math.PI / 2;
-        wing.position.set(-5.0, 5.6, -3.0); // Lowered to 5.6 to be flush with table top
-
-
-
-        // (Removed lTop as requested, table now ends at the shelving unit boundary)
-
-        // Shelves: Rebuilt with Rounded Front Corners
-        var createShelf = function (name, y, sw, sx) {
-            var sWidth = sw || 2.8;
-            var sPosX = sx || 6.3;
-            var radius = 0.4; // Radius for the front curves
-            var halfW = sWidth / 2;
-            var halfD = 3.0; // Depth is 6.0, centered at 0
-
-            var shapePoints = [];
-            // Back corners (Straight)
-            shapePoints.push(new BABYLON.Vector3(halfW, 0, 3.0));
-            shapePoints.push(new BABYLON.Vector3(-halfW, 0, 3.0));
-
-            // Front-Left Curve (Approximating with points)
-            // Starts at z = -2.6, ends at x = -halfW + 0.4
-            for (var a = 180; a <= 270; a += 15) {
-                var rad = a * Math.PI / 180;
-                shapePoints.push(new BABYLON.Vector3(
-                    -halfW + radius + radius * Math.cos(rad),
-                    0,
-                    -halfD + radius + radius * Math.sin(rad)
-                ));
-            }
-
-            // Front-Right Curve
-            for (var a = 270; a <= 360; a += 15) {
-                var rad = a * Math.PI / 180;
-                shapePoints.push(new BABYLON.Vector3(
-                    halfW - radius + radius * Math.cos(rad),
-                    0,
-                    -halfD + radius + radius * Math.sin(rad)
-                ));
-            }
-
-            var shelfMesh = new BABYLON.Mesh(name, scene);
-            var vertices = [];
-            var indices = [];
-            var shelfThickness = 0.3;
-            var count = shapePoints.length;
-
-            // Bottom & Top vertices
-            shapePoints.forEach(p => vertices.push(p.x, 0, p.z));
-            shapePoints.forEach(p => vertices.push(p.x, shelfThickness, p.z));
-
-            // Face Triangulation (Fan approach for the top/bottom faces)
-            for (var i = 1; i < count - 1; i++) {
-                // Bottom face
-                indices.push(0, i + 1, i);
-                // Top face
-                indices.push(count + 0, count + i, count + i + 1);
-            }
-            // Vertical Side Panels
-            for (var i = 0; i < count; i++) {
-                var next = (i + 1) % count;
-                var b1 = i;
-                var b2 = next;
-                var t1 = i + count;
-                var t2 = next + count;
-                indices.push(b1, t1, t2);
-                indices.push(b1, t2, b2);
-            }
-
-            var vd = new BABYLON.VertexData();
-            vd.positions = vertices;
-            vd.indices = indices;
-            var normals = [];
-            BABYLON.VertexData.ComputeNormals(vertices, indices, normals);
-            vd.normals = normals;
-            vd.applyToMesh(shelfMesh);
-
-            shelfMesh.position.set(sPosX, y, 0);
-            var sMat = dWhite.clone(name + "_mat");
-            sMat.backFaceCulling = false;
-            shelfMesh.material = sMat;
-            shelfMesh.parent = deskParent;
-        };
-        createShelf("shelf_bottom", 1.6);
-        createShelf("shelf_mid", 3.4);
-        // Top shelf shifted right and widened (hides poles, touches riser)
-        createShelf("shelf_top", 7.2, 3.3, 6.65);
-
-        // (Removed redundant left bottom shelf)
-
-        // --- Monitor Riser (Touching Top shelf and legs at x=5.2) ---
-        var riserTop = BABYLON.MeshBuilder.CreateBox("riserTop", { width: 12.2, height: 0.3, depth: 2.2 }, scene);
-        riserTop.position.set(-0.9, 7.2, 1.9);
-        riserTop.material = dWhite;
-        riserTop.parent = deskParent;
-
-        // (Removed riserGlowStrip as requested to eliminate the horizontal stick look)
-
-        // Riser Supports (Positionally adjusted for shorter riser)
-        for (var i = 0; i < 3; i++) {
-            var sup = BABYLON.MeshBuilder.CreateBox("riserSup_" + i, { width: 0.2, height: 1.4, depth: 0.2 }, scene);
-            sup.position.set(-6.0 + i * 5.0, 6.5, 1.9);
-            sup.material = dWhite;
-            sup.parent = deskParent;
-        }
-
-        // --- 4.5 Support Frame Architecture ---
-        // Shelf Pillars (Fixed heights to match image)
-        var createPole = function (name, x, y, z, h) {
-            var p = BABYLON.MeshBuilder.CreateBox(name, { width: 0.2, height: h, depth: 0.2 }, scene);
-            p.position.set(x, y, z);
-            p.material = dFrameMat;
-            p.parent = deskParent;
-        };
-        createPole("pole1", 5.2, 3.675, 2.7, 7.35); // Front Inner (Tucked under shelf)
-        createPole("pole2", 7.4, 3.675, 2.7, 7.35); // Front Outer (Tucked under shelf)
-        createPole("pole3", 5.2, 3.675, -2.7, 7.35); // Back Inner (Tucked under shelf)
-        createPole("pole4", 7.4, 3.675, -2.7, 7.35); // Back Outer (Tucked under shelf)
-
-        // (Removed xFrameGroup as requested to rebuild legs)
-
-        // (Removed vSupGroup cross-support as requested)
+        var hookHoriz = BABYLON.MeshBuilder.CreateBox("hookHoriz", { width: 0.15, height: 0.2, depth: 0.8 }, scene);
+        hookHoriz.position = new BABYLON.Vector3(topWidth / 2 - 0.5, 4.8, 3.3);
+        hookHoriz.parent = deskParent;
+        hookHoriz.material = accentMat;
 
         // 5. Final Lighting Setup (Stable & Atmospheric)
 
         // Purple Wall Glow (Center-out) 
         var wallGlow = new BABYLON.PointLight("wallGlow", new BABYLON.Vector3(-10, 12, 10), scene);
         wallGlow.diffuse = new BABYLON.Color3(0.6, 0.2, 1);
-        wallGlow.intensity = 400; // Reduced to let texture emissives shine
+        wallGlow.intensity = 1200; // Reduced for better slab contrast
         wallGlow.range = 35;
 
         // Base Ambient/Area light
